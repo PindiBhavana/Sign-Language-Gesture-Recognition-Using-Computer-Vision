@@ -1,5 +1,7 @@
 🤟 Sign Language Gesture Recognition using Computer Vision and Machine Learning
 
+---
+
 📌 Overview
 
 This project is a Computer Vision and Machine Learning application that recognizes sign language gestures representing English alphabets (A–Z), digits (0–9), and the underscore (_) symbol. The system predicts the corresponding gesture from an uploaded image, webcam capture, or video input and displays the predicted symbol along with its confidence score.
@@ -9,6 +11,8 @@ The model was trained on a dataset containing 55,522 sign language gesture image
 
 
 The application is deployed using Streamlit Community Cloud, providing a simple and interactive web interface for real-time gesture recognition.
+
+---
 
 ✨ Features
 
@@ -32,6 +36,8 @@ Underscore (_)
 
 🎨 Modern and User-Friendly Streamlit Interface
 
+---
+
 🛠️ Technologies Used
 
 Python
@@ -52,6 +58,7 @@ Joblib
 
 Streamlit
 
+---
 
 🔄 Machine Learning Workflow
 
@@ -73,6 +80,7 @@ Model Serialization (Joblib)
 
 Streamlit Deployment
 
+---
 
 📊 Model
 
@@ -85,6 +93,8 @@ Hyperparameter Tuning: GridSearchCV
 Input: 50 × 50 grayscale image
 
 Output: Predicted gesture with confidence score
+
+---
 
 📷 Application Preview
 
@@ -100,6 +110,7 @@ Displaying prediction confidence
 
 Visualizing prediction probabilities
 
+---
 
 🚀 Future Enhancements
 
@@ -113,9 +124,12 @@ Mobile application deployment
 
 Multi-hand gesture recognition
 
+---
 
 👩‍💻 Author
 
 Pindi Bhavana
+
+---
 
 ⭐ If you found this project useful, consider giving the repository a Star on GitHub.
