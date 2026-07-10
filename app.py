@@ -3,7 +3,6 @@ import joblib
 import numpy as np
 import cv2
 from PIL import Image
-import mediapipe as mp
 import plotly.express as px
 import pandas as pd
 import tempfile
