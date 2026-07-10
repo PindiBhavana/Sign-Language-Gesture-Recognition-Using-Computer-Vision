@@ -70,7 +70,8 @@ if model_loaded:
     if input_method == "🖼️ Image Upload":
         uploaded_file = st.file_uploader("Upload a clear image of a hand sign...", type=["jpg", "jpeg", "png"])
         if uploaded_file is not None:
-            image_to_predict = Image.open(uploaded_file)
+            # Force image to RGB to prevent channel errors
+            image_to_predict = Image.open(uploaded_file).convert('RGB')
             st.image(image_to_predict, caption="Uploaded Image", width=400)
 
     # 2. WEBCAM PHOTO
@@ -78,7 +79,8 @@ if model_loaded:
         st.info("Allow camera access to take a picture of your hand gesture.")
         camera_image = st.camera_input("Take a picture 📸")
         if camera_image is not None:
-            image_to_predict = Image.open(camera_image)
+            # Force image to RGB to prevent channel errors
+            image_to_predict = Image.open(camera_image).convert('RGB')
 
     # 3. VIDEO UPLOAD
     elif input_method == "🎥 Video Upload":
@@ -104,7 +106,7 @@ if model_loaded:
                     mp_draw.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
                 
                 frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                stframe.image(frame_rgb, channels="RGB", use_container_width=True)
+                stframe.image(frame_rgb, channels="RGB", width="stretch")
                 
                 # Predict using the 900 features
                 prediction = model.predict(features)[0]
@@ -121,8 +123,11 @@ if model_loaded:
         st.subheader("🤖 Prediction Results")
         
         with st.spinner("Processing image pixels..."):
+            # Convert PIL RGB format to standard OpenCV BGR format
             image_array = np.array(image_to_predict)
-            features, _ = process_image(image_array)
+            image_bgr = cv2.cvtColor(image_array, cv2.COLOR_RGB2BGR)
+            
+            features, _ = process_image(image_bgr)
             
             # Predict and calculate probabilities
             prediction = model.predict(features)[0]
