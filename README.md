@@ -1,4 +1,4 @@
-🤟 Sign Language Gesture Recognition using Computer Vision and Machine Learning
+##🤟 Sign Language Gesture Recognition using Computer Vision and Machine Learning
 
 ---
 
@@ -40,59 +40,59 @@ Underscore (_)
 
 🛠️ Technologies Used
 
-Python
+- Python
 
-OpenCV
+- OpenCV
 
-Scikit-learn
+- Scikit-learn
 
-Scikit-image (HOG)
+- Scikit-image (HOG)
 
-NumPy
+- NumPy
 
-Pandas
+- Pandas
 
-Plotly
+- Plotly
 
-Joblib
+- Joblib
 
-Streamlit
+- Streamlit
 
 ---
 
 🔄 Machine Learning Workflow
 
-Data Collection
+- Data Collection
 
-Image Preprocessing
+- Image Preprocessing
 
-HOG Feature Extraction
+- HOG Feature Extraction
 
-Train-Test Split (80:20)
+- Train-Test Split (80:20)
 
-Model Training
+- Model Training
 
-Hyperparameter Tuning (GridSearchCV)
+- Hyperparameter Tuning (GridSearchCV)
 
-Model Evaluation
+- Model Evaluation
 
-Model Serialization (Joblib)
+- Model Serialization (Joblib)
 
-Streamlit Deployment
+- Streamlit Deployment
 
 ---
 
 📊 Model
 
-Algorithm: Random Forest Classifier
+- Algorithm : Random Forest Classifier
 
-Feature Extraction: Histogram of Oriented Gradients (HOG)
+- Feature Extraction: Histogram of Oriented Gradients (HOG)
 
-Hyperparameter Tuning: GridSearchCV
+- Hyperparameter Tuning: GridSearchCV
 
-Input: 50 × 50 grayscale image
+- Input: 50 × 50 grayscale image
 
-Output: Predicted gesture with confidence score
+- Output: Predicted gesture with confidence score
 
 ---
 
@@ -100,29 +100,29 @@ Output: Predicted gesture with confidence score
 
 The application supports:
 
-Uploading gesture images
+- Uploading gesture images
 
-Capturing images using a webcam
+- Capturing images using a webcam
 
-Uploading short gesture videos
+- Uploading short gesture videos
 
-Displaying prediction confidence
+- Displaying prediction confidence
 
-Visualizing prediction probabilities
+- Visualizing prediction probabilities
 
 ---
 
 🚀 Future Enhancements
 
-Real-time webcam video recognition
+- Real-time webcam video recognition
 
-Word and sentence formation from continuous gestures
+- Word and sentence formation from continuous gestures
 
-Deep Learning (CNN) implementation
+- Deep Learning (CNN) implementation
 
-Mobile application deployment
+- Mobile application deployment
 
-Multi-hand gesture recognition
+- Multi-hand gesture recognition
 
 ---
 
