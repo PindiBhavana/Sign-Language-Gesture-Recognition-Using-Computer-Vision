@@ -7,5 +7,5 @@ opencv-python-headless
 scikit-image
 joblib
 plotly
-mediapipe==0.10.14
+
 
