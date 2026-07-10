@@ -1,4 +1,4 @@
-#🤟 Sign Language Gesture Recognition using Computer Vision and Machine Learning
+🤟 Sign Language Gesture Recognition using Computer Vision and Machine Learning
 
 📌 Overview
 
