@@ -1,161 +1,341 @@
 import streamlit as st
 import joblib
-import numpy as np
 import cv2
+import numpy as np
 from PIL import Image
-import plotly.express as px
+from skimage.feature import hog
 import pandas as pd
+import plotly.express as px
 import tempfile
 import time
 
-# 🎨 Page Configuration
-st.set_page_config(page_title="Sign Language Predictor", page_icon="✋", layout="wide")
+st.set_page_config(
+    page_title="Sign Language Gesture Recognition",
+    page_icon="🤟",
+    layout="wide"
+)
 
-# 🌈 Custom CSS for a beautiful UI
 st.markdown("""
-    <style>
-    .main {background-color: #FAFAFA;}
-    h1 {color: #FF4B4B; text-align: center;}
-    .stAlert {border-radius: 15px;}
-    </style>
-""", unsafe_allow_html=True)
+<style>
 
-# Load the Random Forest Model
+.main{
+background:#f4f7fb;
+}
+
+h1{
+text-align:center;
+color:#1565C0;
+}
+
+h3{
+color:#3949AB;
+}
+
+.stButton>button{
+background:#1565C0;
+color:white;
+border-radius:10px;
+height:3em;
+width:100%;
+font-size:18px;
+}
+
+.stMetric{
+background:white;
+padding:15px;
+border-radius:12px;
+box-shadow:0px 0px 8px rgba(0,0,0,0.15);
+}
+
+</style>
+""",unsafe_allow_html=True)
+
+
 @st.cache_resource
 def load_model():
-    model = joblib.load('compressed_model.pkl')
-    return model
+    return joblib.load("compressed_model.pkl")
 
-try:
-    model = load_model()
-    model_loaded = True
-except Exception as e:
-    st.error("Model not found. Please ensure 'compressed_model.pkl' is uploaded.")
-    model_loaded = False
 
-# Setup MediaPipe purely for drawing visual tracking lines on screen
-mp_hands = mp.solutions.hands
-hands = mp_hands.Hands(static_image_mode=True, max_num_hands=1, min_detection_confidence=0.5)
-mp_draw = mp.solutions.drawing_utils
+model=load_model()
 
-# 🤖 Fixed Feature Processing (Converts image to 900 features)
-def process_image(image_array):
-    # 1. Convert to grayscale and resize to 30x30 to get exactly 900 features (30 * 30 = 900)
-    gray = cv2.cvtColor(image_array, cv2.COLOR_BGR2GRAY)
-    resized = cv2.resize(gray, (30, 30))
-    features = resized.flatten().reshape(1, -1)
-    
-    # 2. Run MediaPipe just to get visual landmarks to draw on the screen for the user
-    img_rgb = cv2.cvtColor(image_array, cv2.COLOR_BGR2RGB)
-    results = hands.process(img_rgb)
-    hand_landmarks = None
-    if results.multi_hand_landmarks:
-        hand_landmarks = results.multi_hand_landmarks[0]
-        
-    return features, hand_landmarks
+st.title("🤟 Sign Language Gesture Recognition")
+st.write(
+"""
+Recognize **A-Z**, **0-9** and **_** using a trained
+Random Forest model with **HOG Features**.
+"""
+)
 
-# 🌈 Main UI
-st.title("✋ Sign Language Gesture Predictor 🌈")
-st.markdown("Translate sign language gestures using AI! Upload an image, take a picture, or process a video.")
+st.sidebar.title("📂 Input")
 
-if model_loaded:
-    st.sidebar.header("⚙️ Input Options")
-    input_method = st.sidebar.radio("Choose Input Method:", 
-                                    ("🖼️ Image Upload", "📷 Webcam Photo", "🎥 Video Upload"))
+option=st.sidebar.radio(
+"Choose Input",
+[
+"📷 Webcam",
+"🖼 Upload Image",
+"🎥 Upload Video"
+]
+)
 
-    image_to_predict = None
 
-    # 1. IMAGE UPLOAD
-    if input_method == "🖼️ Image Upload":
-        uploaded_file = st.file_uploader("Upload a clear image of a hand sign...", type=["jpg", "jpeg", "png"])
-        if uploaded_file is not None:
-            # Force image to RGB to prevent channel errors
-            image_to_predict = Image.open(uploaded_file).convert('RGB')
-            st.image(image_to_predict, caption="Uploaded Image", width=400)
+def extract_hog(image):
 
-    # 2. WEBCAM PHOTO
-    elif input_method == "📷 Webcam Photo":
-        st.info("Allow camera access to take a picture of your hand gesture.")
-        camera_image = st.camera_input("Take a picture 📸")
-        if camera_image is not None:
-            # Force image to RGB to prevent channel errors
-            image_to_predict = Image.open(camera_image).convert('RGB')
+    image=cv2.resize(image,(50,50))
 
-    # 3. VIDEO UPLOAD
-    elif input_method == "🎥 Video Upload":
-        st.info("Upload a short video of a sign language gesture. The AI will process it frame-by-frame.")
-        uploaded_video = st.file_uploader("Upload Video", type=["mp4", "mov", "avi"])
-        
-        if uploaded_video is not None:
-            tfile = tempfile.NamedTemporaryFile(delete=False) 
-            tfile.write(uploaded_video.read())
-            
-            cap = cv2.VideoCapture(tfile.name)
-            stframe = st.empty() 
-            pred_text = st.empty() 
-            
-            while cap.isOpened():
-                ret, frame = cap.read()
-                if not ret:
-                    break
-                
-                features, hand_landmarks = process_image(frame)
-                
-                if hand_landmarks:
-                    mp_draw.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
-                
-                frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                stframe.image(frame_rgb, channels="RGB", width="stretch")
-                
-                # Predict using the 900 features
-                prediction = model.predict(features)[0]
-                pred_text.markdown(f"<h2 style='text-align: center; color: #4CAF50;'>🔤 Predicted: {prediction}</h2>", unsafe_allow_html=True)
-                
-                time.sleep(0.04)
-                
-            cap.release()
-            st.success("Video processing complete! 🎬")
+    gray=cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
 
-    # 🤖 PREDICTION LOGIC (For Images/Photos)
-    if image_to_predict is not None and input_method != "🎥 Video Upload":
-        st.markdown("---")
-        st.subheader("🤖 Prediction Results")
-        
-        with st.spinner("Processing image pixels..."):
-            # Convert PIL RGB format to standard OpenCV BGR format
-            image_array = np.array(image_to_predict)
-            image_bgr = cv2.cvtColor(image_array, cv2.COLOR_RGB2BGR)
-            
-            features, _ = process_image(image_bgr)
-            
-            # Predict and calculate probabilities
-            prediction = model.predict(features)[0]
-            probabilities = model.predict_proba(features)[0]
-            classes = model.classes_
-            max_prob = np.max(probabilities)
-            
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                st.success("✅ Image Processed Successfully!")
-                st.metric(label="🔤 Predicted Symbol / Class", value=str(prediction))
-                st.metric(label="📊 Prediction Confidence", value=f"{max_prob * 100:.2f}%")
-            
-            with col2:
-                df_probs = pd.DataFrame({
-                    'Class': classes,
-                    'Probability': probabilities * 100
-                })
-                df_probs = df_probs.sort_values(by='Probability', ascending=True)
-                
-                fig = px.bar(
-                    df_probs, 
-                    x='Probability', 
-                    y='Class', 
-                    orientation='h',
-                    title="🌈 Model Confidence by Class",
-                    color='Probability',
-                    color_continuous_scale='sunset'
-                )
-                fig.update_layout(height=300, margin=dict(l=0, r=0, t=30, b=0))
-                st.plotly_chart(fig, use_container_width=True)
+    gray=gray.astype("float32")/255.0
+
+    features=hog(
+        gray,
+        orientations=9,
+        pixels_per_cell=(8,8),
+        cells_per_block=(2,2),
+        block_norm="L2-Hys"
+    )
+
+    return features.reshape(1,-1)
+
+
+def predict_image(image):
+
+    features=extract_hog(image)
+
+    prediction=model.predict(features)[0]
+
+    probability=model.predict_proba(features)[0]
+
+    confidence=np.max(probability)
+
+    return prediction,confidence,probability
+
+
+classes=model.classes_
+image = None
+
+# ==============================
+# IMAGE UPLOAD
+# ==============================
+
+if option == "🖼 Upload Image":
+
+    uploaded = st.file_uploader(
+        "Upload Image",
+        type=["jpg", "jpeg", "png"]
+    )
+
+    if uploaded is not None:
+
+        image = Image.open(uploaded).convert("RGB")
+
+        st.image(
+            image,
+            caption="Uploaded Image",
+            use_container_width=True
+        )
+
+# ==============================
+# WEBCAM
+# ==============================
+
+elif option == "📷 Webcam":
+
+    webcam = st.camera_input("Capture Hand Gesture")
+
+    if webcam is not None:
+
+        image = Image.open(webcam).convert("RGB")
+
+        st.image(
+            image,
+            caption="Captured Image",
+            use_container_width=True
+        )
+
+# ==============================
+# VIDEO
+# ==============================
+
+elif option == "🎥 Upload Video":
+
+    uploaded_video = st.file_uploader(
+        "Upload Video",
+        type=["mp4", "avi", "mov"]
+    )
+
+    if uploaded_video is not None:
+
+        temp = tempfile.NamedTemporaryFile(delete=False)
+
+        temp.write(uploaded_video.read())
+
+        cap = cv2.VideoCapture(temp.name)
+
+        frame_placeholder = st.empty()
+
+        prediction_placeholder = st.empty()
+
+        progress = st.progress(0)
+
+        total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+
+        count = 0
+
+        while cap.isOpened():
+
+            ret, frame = cap.read()
+
+            if not ret:
+                break
+
+            rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+            pred, conf, prob = predict_image(frame)
+
+            cv2.putText(
+                frame,
+                f"{pred}",
+                (20,40),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                1,
+                (0,255,0),
+                2
+            )
+
+            frame_placeholder.image(
+                cv2.cvtColor(frame,cv2.COLOR_BGR2RGB),
+                use_container_width=True
+            )
+
+            prediction_placeholder.success(
+                f"Prediction : {pred} | Confidence : {conf*100:.2f}%"
+            )
+
+            count += 1
+
+            if total > 0:
+                progress.progress(min(count/total,1.0))
+
+            time.sleep(0.02)
+
+        cap.release()
+
+        st.success("Video Prediction Completed ✅")
+
+# ==============================
+# IMAGE PREDICTION
+# ==============================
+
+if image is not None:
+
+    st.divider()
+
+    img = np.array(image)
+
+    img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+
+    with st.spinner("Predicting..."):
+
+        prediction, confidence, probability = predict_image(img)
+
+    st.subheader("🎯 Prediction Results")
+
+    col1, col2 = st.columns([1, 1])
+
+    with col1:
+
+        st.success("Prediction Completed Successfully!")
+
+        st.metric(
+            label="🔤 Predicted Symbol",
+            value=str(prediction)
+        )
+
+        st.metric(
+            label="📝 Predicted Class Name",
+            value=str(prediction)
+        )
+
+        st.metric(
+            label="📊 Prediction Confidence",
+            value=f"{confidence*100:.2f}%"
+        )
+
+    with col2:
+
+        df = pd.DataFrame({
+            "Class": classes,
+            "Probability": probability * 100
+        })
+
+        df = df.sort_values(
+            by="Probability",
+            ascending=False
+        )
+
+        fig = px.bar(
+            df.head(10),
+            x="Probability",
+            y="Class",
+            orientation="h",
+            color="Probability",
+            color_continuous_scale="Turbo",
+            title="Top 10 Predictions"
+        )
+
+        fig.update_layout(
+            height=450,
+            yaxis=dict(categoryorder="total ascending")
+        )
+
+        st.plotly_chart(
+            fig,
+            use_container_width=True
+        )
+
+    st.divider()
+
+    st.subheader("📋 Prediction Summary")
+
+    st.write(f"**Predicted Symbol:** {prediction}")
+
+    st.write(f"**Predicted Class Name:** {prediction}")
+
+    st.write(f"**Prediction Confidence:** {confidence*100:.2f}%")
+
+    if confidence >= 0.95:
+        st.success("🟢 Very High Confidence Prediction")
+
+    elif confidence >= 0.80:
+        st.info("🟡 High Confidence Prediction")
+
+    elif confidence >= 0.60:
+        st.warning("🟠 Moderate Confidence Prediction")
+
+    else:
+        st.error("🔴 Low Confidence. Try another clearer image.")
+
+st.markdown("---")
+
+st.markdown(
+"""
+<div style='text-align:center'>
+
+### 🤟 Sign Language Gesture Recognition using Computer Vision & Machine Learning
+
+**Random Forest + HOG Features**
+
+Supports:
+
+✅ Alphabets (A-Z)
+
+✅ Numbers (0-9)
+
+✅ Underscore (_)
+
+Developed using **Streamlit**, **OpenCV**, **Scikit-Learn**, and **Plotly**.
+
+</div>
+""",
+unsafe_allow_html=True
+)
