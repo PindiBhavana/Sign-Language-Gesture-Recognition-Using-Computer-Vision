@@ -7,4 +7,4 @@ mediapipe==0.10.14
 plotly
 pandas
 joblib
-protobuf==3.20.3
+
